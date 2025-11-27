@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Philippine History Hangman</title>
+<link href="https://fonts.googleapis.com/css2?family=Permanent+Marker&display=swap" rel="stylesheet">
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+body {
+  height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background: #f0e7db;
+  font-family: 'Permanent Marker', cursive;
+}
+
+.container {
+  text-align: center;
+  background-color: rgba(255,255,255,0.85);
+  padding: 50px 40px;
+  border-radius: 25px;
+  border: 4px dashed #333;
+  box-shadow: 5px 5px 0 #333;
+  animation: floatIn 1s ease;
+  width: 80%;
+  max-width: 900px;
+}
+
+h1 {
+  font-size: 3rem;
+  color: #333;
+  margin-bottom: 40px;
+  text-shadow: 2px 2px #fff;
+}
+
+.btn {
+  display: block;
+  width: 40%;
+  margin: 15px auto;
+  padding: 15px;
+  font-size: 1.2rem;
+  border: 3px solid #333;
+  border-radius: 15px;
+  cursor: pointer;
+  background-color: #fffbf0;
+  transition: all 0.2s ease;
+  box-shadow: 3px 3px 0 #333;
+}
+.btn:hover { transform: translate(-2px,-2px) scale(1.05); box-shadow:5px 5px 0 #333; }
+
+.btn.exit {
+  border-color: #b52a3a;
+  box-shadow: 3px 3px 0 #b52a3a;
+  background-color: #ffe5e5;
+}
+.btn.exit:hover { box-shadow: 5px 5px 0 #b52a3a; }
+
+@keyframes floatIn { from {opacity:0; transform:translateY(-30px);} to {opacity:1; transform:translateY(0);} }
+</style>
+</head>
+<body>
+
+<script>
+// Session check
+if (!sessionStorage.getItem("sessionStarted")) {
+    window.location.href = "index.html";
+}
+</script>
+
+<audio id="bgMusic" src="assets/audio/wap.mp3" loop></audio>
+
+<div class="container">
+  <h1>Hangman: PH History Edition</h1>
+  <button class="btn" id="spainBtn">Spain Era</button>
+  <button class="btn" id="americaBtn">American Era</button>
+  <button class="btn" id="japanBtn">Japanese Era</button>
+  <button class="btn exit" id="exitBtn">Exit</button>
+</div>
+
+<script>
+const music = document.getElementById("bgMusic");
+
+// Play music if allowed
+if(localStorage.getItem("musicPlaying") === "yes") {
+    music.volume = 1;
+    music.play().catch(()=>{ console.log("Music blocked"); });
+}
+
+// Backup: allow click to start music
+document.body.addEventListener("click", () => {
+    if(music.paused) music.play().catch(()=>{});
+}, {once:true});
+
+// Navigation buttons
+document.getElementById("spainBtn").addEventListener("click", () => window.location.href="spain.html");
+document.getElementById("americaBtn").addEventListener("click", () => window.location.href="america.html");
+document.getElementById("japanBtn").addEventListener("click", () => window.location.href="japan.html");
+document.getElementById("exitBtn").addEventListener("click", () => window.location.href="index.html");
+</script>
+
+</body>
+</html>

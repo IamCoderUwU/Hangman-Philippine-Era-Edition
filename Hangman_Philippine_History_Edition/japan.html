@@ -1,0 +1,638 @@
+
+  
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Hangman: Spain Era</title>
+<link href="https://fonts.googleapis.com/css2?family=Permanent+Marker&display=swap" rel="stylesheet">
+<style>
+  html, body {
+    margin: 0;
+    padding: 0;
+    font-family: 'Permanent Marker', cursive;
+    background: #f0e7db url('https://i.imgur.com/w1XvT4W.png') no-repeat center center fixed;
+    background-size: cover;
+    height: 100%;
+    width: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+  }
+
+  .container {
+    display: flex;
+    width: 94%;
+    max-width: 1200px;
+    background-color: rgba(255,255,255,0.92);
+    border-radius: 18px;
+    border: 4px dashed #333;
+    box-shadow: 6px 6px 0 #333;
+    overflow: hidden;
+  }
+
+  .left-panel, .right-panel {
+    padding: 18px;
+    box-sizing: border-box;
+  }
+
+  .left-panel {
+    flex: 1;
+    display:flex;
+    justify-content:center;
+    align-items:center;
+  }
+
+  .left-panel img {
+    max-width: 100%;
+    height: auto;
+    user-select: none;
+    -webkit-user-drag: none;
+  }
+
+  .right-panel {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center; /* center vertically */
+  align-items: center;
+  gap: 12px;
+}
+
+
+  h1 {
+    font-size: 2rem;
+    margin: 6px 0 12px 0;
+    color:#333;
+    text-shadow: 1px 1px #fff;
+  }
+
+  .word-container {
+    display:flex;
+    justify-content:center;
+    flex-wrap:wrap;
+    font-size:1.4rem;
+    margin:14px 0;
+    letter-spacing:6px;
+  }
+
+  .letter-box {
+    border-bottom: 3px solid #333;
+    width:42px;
+    height:48px;
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    margin:0 6px;
+    text-transform:uppercase;
+    background: rgba(255,255,255,0.6);
+    border-radius:6px 6px 0 0;
+  }
+
+  .keyboard {
+    display:flex;
+    flex-wrap:wrap;
+    justify-content:center;
+    margin:12px 0 18px 0;
+  }
+
+  .btn {
+    width:40px;
+    height:40px;
+    margin:6px;
+    font-size:1rem;
+    border:3px solid #333;
+    border-radius:6px;
+    background-color:#fffbf0;
+    box-shadow:3px 3px 0 #333;
+    cursor:pointer;
+    transition: all 0.14s ease;
+  }
+
+  .btn:hover { transform: translate(-2px, -2px) scale(1.05); box-shadow:5px 5px 0 #333; }
+  .btn:disabled { opacity:0.45; cursor:not-allowed; transform:none; box-shadow:3px 3px 0 #333; }
+
+  .btn.exit {
+    border-color:#b52a3a;
+    box-shadow:3px 3px 0 #b52a3a;
+    background-color:#ffe5e5;
+    width:130px;
+    height:40px;
+    margin-top:12px;
+  }
+
+  /* Modals */
+  .modal {
+    position: fixed;
+    top:0; left:0;
+    width:100%; height:100%;
+    display:flex; justify-content:center; align-items:center;
+    background: rgba(0,0,0,0.56);
+    opacity:0; visibility:hidden; transition:opacity .25s ease;
+    z-index: 100;
+  }
+  .modal.show { opacity:1; visibility:visible; }
+  .modal-content {
+    background:#fff8e7;
+    padding:22px 26px;
+    border-radius:18px;
+    border:4px dashed #333;
+    max-width:460px; width:88%;
+    transform: translateY(-40px);
+    transition: transform .28s ease;
+    text-align:center;
+  }
+  .modal.show .modal-content { transform: translateY(0); }
+  .modal h2 { margin:0 0 12px 0; font-size:1.7rem; }
+  .modal p { margin:8px 0; color:#333; font-size:1.05rem; line-height:1.4; }
+
+  /* Confirm / Decline buttons */
+  .btn-confirm {
+    background-color:#a8e6cf;
+    border:3px solid #388e3c;
+    width:120px; height:40px;
+    border-radius:10px;
+    box-shadow:3px 3px 0 #333;
+    cursor:pointer;
+  }
+  .btn-confirm:hover { transform: translate(-2px,-2px) scale(1.05); box-shadow:5px 5px 0 #333; }
+
+  .btn-decline {
+    background-color:#ffb3b3;
+    border:3px solid #b52a3a;
+    width:120px; height:40px;
+    border-radius:10px;
+    box-shadow:3px 3px 0 #333;
+    cursor:pointer;
+  }
+  .btn-decline:hover { transform: translate(-2px,-2px) scale(1.05); box-shadow:5px 5px 0 #333; }
+
+  .button-group { display:flex; justify-content:center; gap:14px; margin-top:16px; }
+
+  /* Soft shake - subtle */
+  @keyframes soft-shake {
+    0% { transform: translateX(0); }
+    25% { transform: translateX(-4px) rotate(-0.6deg); }
+    50% { transform: translateX(4px) rotate(0.6deg); }
+    75% { transform: translateX(-2px) rotate(-0.4deg); }
+    100% { transform: translateX(0) rotate(0); }
+  }
+  .soft-shake {
+    animation: soft-shake 360ms ease;
+    transform-origin: center top;
+  }
+
+  /* confetti canvas sits above page but below modal buttons (modal z-index 100) */
+  #confettiCanvas {
+    position: fixed;
+    top:0; left:0;
+    width:100%; height:100%;
+    pointer-events:none;
+    z-index: 110;
+  }
+
+  /* small responsive tweaks */
+  @media (max-width:720px) {
+    .letter-box { width:36px; height:44px; margin:4px; }
+    .btn { width:36px; height:36px; margin:4px; }
+    .container { width:96%; }
+    h1 { font-size:1.6rem; }
+  }
+
+  /* Lose modal floats above keyboard with no dark overlay */
+  #loseModal {
+    background: transparent !important;   /* remove dark background */
+    pointer-events: none;                /* clicks go through overlay */
+  }
+
+  #loseModal .modal-content {
+    pointer-events: auto;                /* but the modal itself is clickable */
+    position: absolute;
+    bottom: 120px;                       /* adjust height above keyboard */
+    z-index: 9999;
+  }
+
+</style>
+</head>
+<body>
+
+  <audio id="bgMusic" src="assets/audio/wap.mp3" preload="auto" loop autoplay></audio>
+
+
+<div class="container" role="application" aria-label="Hangman Spain Era">
+  <div class="left-panel">
+    <img id="hangmanImg" src="assets/images/stickman/stage1.png" alt="Hangman stage" />
+  </div>
+
+  <!-- top icons  -->
+  <div id="topIcons" style="position:absolute; top:12px; right:12px; display:flex; gap:12px; z-index:200;">
+    <button id="musicToggle" title="Toggle Music" style="font-size:1.3rem; width:40px; height:40px; border:none; background:#fffbf0; border-radius:8px; box-shadow:3px3px0 #333; cursor:pointer;">🎵</button>
+    <button id="homeIcon" title="Home" style="font-size:1.3rem; width:40px; height:40px; border:none; background:#fffbf0; border-radius:8px; box-shadow:3px3px0 #333; cursor:pointer;">🏠</button>
+  </div>
+  
+
+  <div class="right-panel">
+    <!-- Hint / Category -->
+    <div id="hint" style="font-size:1.1rem; margin-bottom:10px; color:#555;"></div>
+
+    <!-- Word container stays above hint/keyboard if needed -->
+    <div class="word-container" id="wordContainer" aria-live="polite"></div>
+
+    <!-- Keyboard -->
+    <div class="keyboard" id="keyboard" aria-label="On-screen keyboard"></div>
+  
+    <!-- Title below keyboard -->
+    <h1 id="gameTitle">Spain Era Hangman</h1>
+  
+    
+  </div>
+  
+</div>
+
+<!-- Instruction Modal -->
+<div id="instructionModal" class="modal" role="dialog" aria-modal="true" aria-hidden="false">
+  <div class="modal-content">
+    <h2>📝 Spain Era Hangman</h2>
+    <p>Welcome to the Spain Era level! Guess words and terms related to the <strong>Spanish colonial era</strong> in the Philippines — explorers, places, and historical terms.</p>
+    <p>Wrong letter guesses will add parts to the hangman. Try not to complete the hangman!</p>
+    <div class="button-group">
+      <button id="startBtn" class="btn-confirm">Start Game</button>
+    </div>
+  </div>
+</div>
+
+<!-- Win Modal -->
+<div id="winModal" class="modal" role="dialog" aria-modal="true" aria-hidden="true">
+  <div class="modal-content">
+    <h2>🎉 You Won!</h2>
+    <p>Congratulations — you guessed the word!</p>
+    <div class="button-group">
+      <button id="winRetryBtn" class="btn-confirm">Play Again</button>
+      <button id="winHomeBtn" class="btn-decline">Go Home</button>
+    </div>
+  </div>
+</div>
+
+<!-- Confetti canvas -->
+<canvas id="confettiCanvas"></canvas>
+
+<!-- Loss Modal -->
+<div id="loseModal" class="modal" role="dialog" aria-modal="true" aria-hidden="true">
+  <div class="modal-content">
+    <h2>💀 You Lost</h2>
+    <p>Try again and test your knowledge!</p>
+    
+    <div class="button-group">
+      <button id="retryBtn" class="btn-confirm">Play Again</button>
+      <button id="loseHomeBtn" class="btn-decline">Go Home</button>
+    </div>
+  </div>
+</div>
+
+
+<!-- Exit Modal -->
+<div id="exitModal" class="modal" role="dialog" aria-modal="true" aria-hidden="true">
+  <div class="modal-content">
+    <h2>⚠️ Are you sure?</h2>
+    <p>If you go back to home, your current game progress will be lost.</p>
+    <div style="display:flex; justify-content:center; gap:12px; margin-top:12px;">
+      <button id="cancelExitBtn" class="btn-decline">Cancel</button>
+      <button id="confirmExitBtn" class="btn-confirm">Exit</button>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ---------------------------
+   Game data & elements
+   --------------------------- */
+const words = ["MAGELLAN","GALLEON","KASTILA","MANILA","ENCOMIENDA","GOVERNOR","CONQUISTA","NAPOLEON","SILANG","REVUELTA"];
+let selectedWord = "";
+let guessedLetters = [];
+let wrongGuesses = 0;
+const maxWrong = 6;
+
+const wordContainer = document.getElementById('wordContainer');
+const keyboard = document.getElementById('keyboard');
+const hangmanImg = document.getElementById('hangmanImg');
+
+const instructionModal = document.getElementById('instructionModal');
+const startBtn = document.getElementById('startBtn');
+
+
+const winModal = document.getElementById('winModal');
+const winRetryBtn = document.getElementById('winRetryBtn');
+const winHomeBtn = document.getElementById('winHomeBtn');
+
+const loseModal = document.getElementById('loseModal');
+const retryBtn = document.getElementById('retryBtn');
+const loseHomeBtn = document.getElementById('loseHomeBtn');
+
+const exitModal = document.getElementById('exitModal');
+const cancelExitBtn = document.getElementById('cancelExitBtn');
+const confirmExitBtn = document.getElementById('confirmExitBtn');
+
+const confettiCanvas = document.getElementById('confettiCanvas');
+const confettiCtx = confettiCanvas.getContext?.('2d');
+
+// top icons -------------------------------
+const musicBtn = document.getElementById('musicToggle');
+const homeIcon = document.getElementById('homeIcon');
+const bgMusic = document.getElementById('bgMusic');
+
+/* ---------------------------
+   Helpers: modal open/close
+   --------------------------- */
+function openModal(modal) { modal.classList.add('show'); modal.setAttribute('aria-hidden','false'); }
+function closeModal(modal) { modal.classList.remove('show'); modal.setAttribute('aria-hidden','true'); }
+
+/* ---------------------------
+   Init: show instruction first
+   --------------------------- */
+openModal(instructionModal);
+
+// Hints object mapping words to hints
+  const hints = {
+  MAGELLAN: "Explorer",
+  GALLEON: "Ship used in trade",
+  KASTILA: "Colonial ruler",
+  MANILA: "Capital city / Place",
+  ENCOMIENDA: "Spanish system of land grants",
+  GOVERNOR: "Colonial leader",
+  CONQUISTA: "Spanish conquest",
+  NAPOLEON: "Famous European leader",
+  SILANG: "Revolutionary leader",
+  REVUELTA: "Rebellion / uprising"
+};
+
+/* ---------------------------
+   Start game / render
+   --------------------------- */
+function initGame() {
+  guessedLetters = [];
+  wrongGuesses = 0;
+
+  // pick random word
+  selectedWord = words[Math.floor(Math.random() * words.length)].toUpperCase();
+
+  // render blanks
+  wordContainer.innerHTML = '';
+  for (let i = 0; i < selectedWord.length; i++) {
+    const box = document.createElement('div');
+    box.className = 'letter-box';
+    box.textContent = '_';
+    wordContainer.appendChild(box);
+  }
+
+  // show hint above keyboard
+  const hintEl = document.getElementById('hint');
+  hintEl.textContent = `Hint: ${hints[selectedWord] || 'No hint available'}`;
+
+  // build keyboard
+  keyboard.innerHTML = '';
+  for (let i = 65; i <= 90; i++) {
+    const ch = String.fromCharCode(i);
+    const btn = document.createElement('button');
+    btn.className = 'btn';
+    btn.textContent = ch;
+    btn.setAttribute('aria-label', `Letter ${ch}`);
+    btn.addEventListener('click', () => handleGuess(ch, btn));
+    keyboard.appendChild(btn);
+  }
+
+  // reset hangman image to stage1 (no wrong guesses yet)
+  updateHangmanImage();
+
+  // close any open modals
+  closeModal(winModal);
+  closeModal(loseModal);
+  closeModal(exitModal);
+}
+
+
+/* ---------------------------
+   Hangman image update
+   (images are stage1->stage6)
+   --------------------------- */
+function updateHangmanImage() {
+  // wrongGuesses 0 => stage1, 1 => stage2, ... up to stage6
+  const stage = Math.min(wrongGuesses + 1, maxWrong);
+  hangmanImg.src = `assets/images/stickman/stage${stage}.png`;
+}
+
+/* ---------------------------
+   Soft shake (rope) effect
+   --------------------------- */
+function softShake() {
+  // add class that uses CSS keyframes; remove after animation
+  hangmanImg.classList.remove('soft-shake'); // reflow reset
+  // force reflow (to allow re-triggering immediately)
+  // eslint-disable-next-line
+  void hangmanImg.offsetWidth;
+  hangmanImg.classList.add('soft-shake');
+  // class will be removed automatically by animationend listener below
+}
+hangmanImg.addEventListener('animationend', () => {
+  hangmanImg.classList.remove('soft-shake');
+});
+
+/* ---------------------------
+   Handle guess
+   --------------------------- */
+function handleGuess(letter, btn) {
+  // disable the button
+  btn.disabled = true;
+
+  if (selectedWord.includes(letter)) {
+    // reveal positions
+    for (let i = 0; i < selectedWord.length; i++) {
+      if (selectedWord[i] === letter) {
+        wordContainer.children[i].textContent = letter;
+      }
+    }
+    // check win
+    const revealed = Array.from(wordContainer.children).map(c => c.textContent).join('');
+    if (revealed === selectedWord) {
+      // win
+      disableAllKeys();
+      showWin();
+    }
+  } else {
+    // wrong guess
+    wrongGuesses++;
+    updateHangmanImage();
+    softShake();
+
+    if (wrongGuesses >= maxWrong) {
+      // lose
+      disableAllKeys();
+      showLose();
+    }
+  }
+}
+
+/* ---------------------------
+   Disable keyboard
+   --------------------------- */
+function disableAllKeys() {
+  const buttons = keyboard.querySelectorAll('button');
+  buttons.forEach(b => b.disabled = true);
+}
+
+/* ---------------------------
+   Win / Lose actions
+   --------------------------- */
+function showWin() {
+  openModal(winModal);
+  triggerConfetti();
+}
+
+function showLose() {
+  // Reveal correct answer in red in the letter boxes
+  for (let i = 0; i < selectedWord.length; i++) {
+    const box = wordContainer.children[i];
+    box.textContent = selectedWord[i];
+    box.style.color = "#b52a3a";          // red
+    box.style.fontWeight = "bold";
+  }
+
+  disableAllKeys();
+  openModal(loseModal);
+}
+
+
+/* ---------------------------
+   Modal button bindings
+   --------------------------- */
+startBtn.addEventListener('click', () => {
+  closeModal(instructionModal);
+  initGame();
+});
+
+winRetryBtn.addEventListener('click', () => {
+  closeModal(winModal);
+  initGame();
+});
+document.getElementById('winHomeBtn').addEventListener('click', () => {
+  localStorage.setItem('visitedHome','true');
+  window.location.href = 'index.html';
+});
+retryBtn.addEventListener('click', () => {
+  closeModal(loseModal);
+  initGame();
+});
+document.getElementById('loseHomeBtn').addEventListener('click', () => {
+  localStorage.setItem('visitedHome','true');
+  window.location.href = 'index.html';
+});
+cancelExitBtn.addEventListener('click', () => closeModal(exitModal));
+
+document.getElementById('confirmExitBtn').addEventListener('click', () => {
+  localStorage.setItem('visitedHome','true');
+  window.location.href = 'index.html';
+});
+/* ---------------------------
+   Confetti (visible & robust)
+   --------------------------- */
+function triggerConfetti() {
+  if (!confettiCtx) return; // canvas unsupported
+  const canvas = confettiCanvas;
+  const ctx = confettiCtx;
+
+  // size canvas to viewport
+  canvas.width = window.innerWidth;
+  canvas.height = window.innerHeight;
+
+  const confettiCount = Math.min(300, Math.floor(canvas.width * 0.14)); // scale with width
+  const confetti = [];
+  for (let i = 0; i < confettiCount; i++) {
+    confetti.push({
+      x: Math.random() * canvas.width,
+      y: Math.random() * (canvas.height * 0.25), // start near top
+      size: Math.random() * 8 + 6,
+      color: `hsl(${Math.floor(Math.random()*360)}, 90%, 55%)`,
+      speedY: Math.random() * 3 + 2.5,
+      speedX: Math.random() * 2 - 1
+    });
+  }
+
+  let running = true;
+  function draw() {
+    if (!running) return;
+    ctx.clearRect(0,0,canvas.width,canvas.height);
+    confetti.forEach(c => {
+      ctx.fillStyle = c.color;
+      ctx.fillRect(c.x, c.y, c.size, c.size * 0.6);
+      // small tilt line
+      ctx.fillRect(c.x + c.size*0.2, c.y + c.size*0.1, c.size*0.4, c.size*0.08);
+    });
+    update();
+    requestAnimationFrame(draw);
+  }
+  function update() {
+    for (let i=0;i<confetti.length;i++){
+      const c = confetti[i];
+      c.y += c.speedY;
+      c.x += c.speedX;
+      // gentle sway
+      c.x += Math.sin((Date.now()/500) + i) * 0.3;
+      if (c.y > canvas.height + 20) {
+        c.y = -20;
+        c.x = Math.random() * canvas.width;
+      }
+    }
+  }
+
+  draw();
+  // stop after 4.5s
+  setTimeout(() => {
+    running = false;
+    ctx.clearRect(0,0,canvas.width,canvas.height);
+  }, 4500);
+}
+
+/* ---------------------------
+   Accessibility: allow keyboard input
+   --------------------------- */
+document.addEventListener('keydown', (e) => {
+  // ignore if modals open
+  if (instructionModal.classList.contains('show') || winModal.classList.contains('show') || loseModal.classList.contains('show') ) return;
+  const key = e.key.toUpperCase();
+  if (/^[A-Z]$/.test(key)) {
+    // find first button not disabled with this letter
+    const btns = Array.from(keyboard.querySelectorAll('button'));
+    const btn = btns.find(b => b.textContent === key && !b.disabled);
+    if (btn) btn.click();
+  }
+});
+
+/* ---------------------------
+   Start: keep instruction modal visible; when user starts, initGame runs
+   --------------------------- */
+
+  //  top icons
+let musicPlaying = true;
+
+// Music toggle
+musicBtn.addEventListener('click', () => {
+  if (!bgMusic) return;
+  if (musicPlaying) {
+    bgMusic.pause();
+    musicBtn.textContent = '🔇';
+  } else {
+    bgMusic.play().catch(()=>{}); // catch autoplay errors
+    musicBtn.textContent = '🎵';
+  }
+  musicPlaying = !musicPlaying;
+});
+
+// Home icon triggers exit modal
+homeIcon.addEventListener('click', () => {
+  localStorage.setItem('visitedHome','true'); // mark home visited
+  window.location.href = 'index.html';
+});
+
+</script>
+</body>
+</html>

@@ -1,0 +1,7 @@
+# Enable URL rewriting
+RewriteEngine On
+
+# Redirect any request except index.html and assets to index.html
+RewriteCond %{REQUEST_URI} !^/index\.html$ [NC]
+RewriteCond %{REQUEST_URI} !\.(css|js|png|jpg|jpeg|gif|mp3|woff|woff2|ttf)$ [NC]
+RewriteRule ^.*$ /index.html [R=302,L]
